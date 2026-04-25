@@ -95,6 +95,14 @@ export default function Home() {
   };
 
   const executeAttack = async (attackType: AttackType) => {
+    // Si ya hay un muestreo en resultado, limpiar antes de ejecutar el siguiente
+    if (phase === 'result') {
+      setSimulationData((prev) => ({
+        ...prev,
+        services: prev.services.map((s) => ({ ...s, status: 'online' })),
+      }));
+    }
+    
     setCurrentAttack(attackType);
     setPhase('login');
     setSimulationData((prev) => ({ ...prev, inProgress: 1 }));
@@ -239,7 +247,7 @@ export default function Home() {
           <div className="flex-1">
             <AttackSamples
               onExecute={executeAttack}
-              disabled={phase !== 'idle'}
+              disabled={phase === 'login' || phase === 'loading' || phase === '2fa'}
               mode={mode}
             />
           </div>
