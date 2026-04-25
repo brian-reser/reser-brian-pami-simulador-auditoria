@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Lock, AlertTriangle, CheckCircle, XCircle, Loader } from 'lucide-react';
 import type { SimulationMode, AttackType, SimulationPhase } from '@/pages/Home';
+import AnimatedSimulation from './AnimatedSimulation';
 
 interface SimulationPanelProps {
   phase: SimulationPhase;
@@ -168,6 +169,18 @@ export default function SimulationPanel({
 
   if (phase === 'result') {
     const isSuccess = mode === 'despues';
+    
+    // En modo DESPUÉS, mostrar animación interactiva
+    if (isSuccess && attackType) {
+      return (
+        <div className="flex items-center justify-center h-full overflow-y-auto">
+          <div className="w-full max-w-2xl py-6 px-4">
+            <AnimatedSimulation attackType={attackType} mode={mode} />
+          </div>
+        </div>
+      );
+    }
+    
     const resultTitle =
       attackType === 'credentials'
         ? isSuccess
