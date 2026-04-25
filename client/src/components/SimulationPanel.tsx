@@ -23,16 +23,20 @@ export default function SimulationPanel({
   const [isProcessing, setIsProcessing] = useState(false);
 
   if (phase === 'idle') {
+    const isAntes = mode === 'antes';
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="text-6xl mb-4 text-cyan-400">⟳</div>
-          <h2 className="text-2xl font-bold text-cyan-400 mb-2 tracking-wider">
-            ESPERANDO SIMULACIÓN
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-bold text-cyan-400 mb-4 tracking-wider">
+            PORTAL DE AFILIADOS PAMI
           </h2>
-          <p className="text-muted-foreground text-sm">
-            Selecciona una muestra de ataque para comenzar
+          <div className={`text-lg font-bold mb-6 tracking-wider ${isAntes ? 'text-red-500' : 'text-green-400'}`}>
+            {isAntes ? 'Estado: Agosto 2023 - Sin controles de seguridad implementados' : 'Estado: Post-auditoría - Todos los controles implementados y verificados'}
+          </div>
+          <p className="text-muted-foreground text-sm mb-8">
+            Seleccione un muestreo en el panel izquierdo para comenzar la simulación.
           </p>
+          <div className="text-6xl text-cyan-400 opacity-50">⟳</div>
         </div>
       </div>
     );
@@ -290,13 +294,6 @@ export default function SimulationPanel({
               </div>
             )}
           </div>
-
-          <button
-            onClick={onReset}
-            className="bg-magenta-500 hover:bg-magenta-600 text-background font-bold py-2 px-6 rounded-sm transition-all duration-200 tracking-wider text-sm glow-magenta"
-          >
-            REINICIAR SIMULACIÓN
-          </button>
         </div>
       </div>
     );

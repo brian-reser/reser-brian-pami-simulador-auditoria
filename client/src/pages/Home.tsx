@@ -4,7 +4,6 @@ import SimulationPanel from '@/components/SimulationPanel';
 import SystemLog from '@/components/SystemLog';
 import AttackSamples from '@/components/AttackSamples';
 import Header from '@/components/Header';
-import ControlsPanel from '@/components/ControlsPanel';
 
 export type SimulationMode = 'antes' | 'despues';
 export type AttackType = 'credentials' | 'sql' | 'backups';
@@ -37,12 +36,14 @@ export default function Home() {
   
   const [simulationData, setSimulationData] = useState<{
     devices: number;
-    incidents: number;
+    compromised: number;
+    inProgress: number;
     alarms: number;
     services: Array<{ name: string; status: ServiceStatus }>;
   }>({
     devices: 12,
-    incidents: 0,
+    compromised: 0,
+    inProgress: 0,
     alarms: 0,
     services: [
       { name: 'Base de Datos', status: 'online' },
@@ -96,6 +97,7 @@ export default function Home() {
   const executeAttack = async (attackType: AttackType) => {
     setCurrentAttack(attackType);
     setPhase('login');
+    setSimulationData((prev) => ({ ...prev, inProgress: 1 }));
     addLog(`[ATTACK] Iniciando simulación: ${attackType}`, 'warning');
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -112,8 +114,9 @@ export default function Home() {
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
-          incidents: prev.incidents + 1,
-          alarms: prev.alarms + 1,
+          compromised: Math.min(prev.compromised + 1, 3),
+          inProgress: 0,
+          alarms: 0,
           services: prev.services.map((s) =>
             s.name === 'Web App' ? { ...s, status: 'exposed' } : s
           ),
@@ -141,8 +144,9 @@ export default function Home() {
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
-          incidents: prev.incidents + 1,
-          alarms: prev.alarms + 1,
+          compromised: Math.min(prev.compromised + 1, 3),
+          inProgress: 0,
+          alarms: 0,
           services: prev.services.map((s) =>
             s.name === 'Base de Datos' ? { ...s, status: 'exposed' } : s
           ),
@@ -150,6 +154,7 @@ export default function Home() {
       } else {
         addLog('[WAF] INYECCIÓN SQL BLOQUEADA - WAF interceptó la solicitud maliciosa', 'success');
         setPhase('result');
+        setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
       }
     } else if (attackType === 'backups') {
       setPhase('loading');
@@ -170,8 +175,9 @@ export default function Home() {
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
-          incidents: prev.incidents + 1,
-          alarms: prev.alarms + 2,
+          compromised: Math.min(prev.compromised + 1, 3),
+          inProgress: 0,
+          alarms: 0,
           services: prev.services.map((s) =>
             s.name === 'Servidor NAS' ? { ...s, status: 'critical' } : s
           ),
@@ -180,6 +186,7 @@ export default function Home() {
         addLog('[FIREWALL] Políticas de firewall impidieron acceso no autorizado', 'success');
         addLog('[WORM] Backups protegidos con WORM - Regla 3-2-1 implementada', 'success');
         setPhase('result');
+        setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
       }
     }
   };
@@ -189,6 +196,7 @@ export default function Home() {
     setPhase('idle');
     setSimulationData((prev) => ({
       ...prev,
+      inProgress: 0,
       services: prev.services.map((s) => ({ ...s, status: 'online' })),
     }));
     addLog('[RESET] Simulación finalizada - Sistema reiniciado', 'info');
@@ -198,8 +206,25 @@ export default function Home() {
     const newMode = mode === 'antes' ? 'despues' : 'antes';
     setMode(newMode);
     resetSimulation();
+    setSimulationData((prev) => ({
+      ...prev,
+      compromised: 0,
+      inProgress: 0,
+      alarms: 0,
+      services: prev.services.map((s) => ({ ...s, status: 'online' })),
+    }));
     addLog(`[MODE] Cambiado a modo ${newMode.toUpperCase()}`, 'info');
   };
+
+  const controlsList = [
+    { key: 'mfa', label: 'MFA', description: 'Autenticación Multifactor' },
+    { key: 'waf', label: 'WAF', description: 'Web App Firewall' },
+    { key: 'tde', label: 'Cifrado TDE', description: 'Cifrado de Datos' },
+    { key: 'worm', label: 'WORM Backup', description: 'Backups Inmutables' },
+    { key: 'vlan', label: 'Segmentación VLAN', description: 'Segmentación de Red' },
+    { key: 'ntp', label: 'NTP', description: 'Sincronización Horaria' },
+    { key: 'soc', label: 'SOC 24/7', description: 'Monitoreo 24/7' },
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
@@ -218,11 +243,6 @@ export default function Home() {
               mode={mode}
             />
           </div>
-          
-          {/* Controls Panel */}
-          <div className="mt-4 pt-4 border-t border-cyan-500/30">
-            <ControlsPanel controls={controls} mode={mode} />
-          </div>
         </div>
 
         {/* Center Panel - Simulation Area */}
@@ -239,66 +259,87 @@ export default function Home() {
                 addLog('[2FA] Acceso denegado - Token inválido', 'error');
               }
               setPhase('result');
+              setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
             }}
           />
         </div>
 
         {/* Right Panel - System Log */}
-        <div className="w-1/4 border border-green-500/30 rounded-sm p-4 glow-green flex flex-col">
-          <div className="mb-4">
-            <h2 className="text-lg font-bold mb-3 text-green-400 tracking-wider">
-              ESTADO DEL SISTEMA
-            </h2>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-card p-2 rounded-sm border border-cyan-500/50">
-                <div className="text-xs text-muted-foreground">DISPOSITIVOS</div>
-                <div className="text-xl font-bold text-cyan-400">{simulationData.devices}</div>
+        <div className="w-1/4 border border-red-500/30 rounded-sm p-4 glow-red flex flex-col overflow-y-auto">
+          {/* Header */}
+          <h2 className="text-lg font-bold mb-4 text-red-400 tracking-wider">
+            LOGS DEL SISTEMA (SIN SIEM)
+          </h2>
+
+          {/* Counters Grid */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="bg-card p-3 rounded-sm border border-red-500/50">
+              <div className="text-red-500 text-2xl font-bold text-center mb-1">
+                {simulationData.compromised}/3
               </div>
-              <div className="bg-card p-2 rounded-sm border border-yellow-500/50">
-                <div className="text-xs text-muted-foreground">INCIDENTES</div>
-                <div className="text-xl font-bold text-yellow-400">
-                  {simulationData.incidents}
-                </div>
-              </div>
-              <div className="bg-card p-2 rounded-sm border border-red-500/50">
-                <div className="text-xs text-muted-foreground">ALARMAS</div>
-                <div className="text-xl font-bold text-red-500">{simulationData.alarms}</div>
+              <div className="text-xs text-muted-foreground text-center tracking-widest">
+                COMPROMETIDOS
               </div>
             </div>
-
-            <div className="mb-4">
-              <h3 className="text-xs font-bold text-cyan-300 mb-2 tracking-widest">
-                SERVICIOS
-              </h3>
-              <div className="space-y-1">
-                {simulationData.services.map((service) => (
-                  <div
-                    key={service.name}
-                    className="flex items-center justify-between text-xs p-1 rounded-sm bg-card/50 border border-border/50"
-                  >
-                    <span>{service.name}</span>
-                    <span
-                      className={`font-bold ${
-                        service.status === 'online'
-                          ? 'text-green-400'
-                          : service.status === 'exposed'
-                            ? 'text-yellow-400'
-                            : 'text-red-500'
-                      }`}
-                    >
-                      {service.status === 'online'
-                        ? '●'
-                        : service.status === 'exposed'
-                          ? '◐'
-                          : '◯'}
-                    </span>
-                  </div>
-                ))}
+            <div className="bg-card p-3 rounded-sm border border-yellow-500/50">
+              <div className="text-yellow-400 text-2xl font-bold text-center mb-1">
+                {simulationData.inProgress}
+              </div>
+              <div className="text-xs text-muted-foreground text-center tracking-widest">
+                EN CURSO
+              </div>
+            </div>
+            <div className="bg-card p-3 rounded-sm border border-cyan-500/50">
+              <div className="text-cyan-400 text-2xl font-bold text-center mb-1">
+                {simulationData.alarms}
+              </div>
+              <div className="text-xs text-muted-foreground text-center tracking-widest">
+                SIN ALERTAS
               </div>
             </div>
           </div>
 
-          <SystemLog logs={logs} />
+          {/* Controls Table */}
+          <div className="mb-4 border border-cyan-500/30 rounded-sm overflow-hidden">
+            <div className="grid grid-cols-2 gap-0 bg-card/50 border-b border-cyan-500/30">
+              <div className="text-xs font-bold text-cyan-400 p-2 tracking-widest">CONTROL</div>
+              <div className="text-xs font-bold text-cyan-400 p-2 tracking-widest text-right">ESTADO</div>
+            </div>
+            <div className="divide-y divide-cyan-500/20">
+              {controlsList.map((control) => (
+                <div key={control.key} className="grid grid-cols-2 gap-0 p-2 text-xs hover:bg-card/50">
+                  <div className="text-muted-foreground">{control.label}</div>
+                  <div className="text-right">
+                    {mode === 'antes' ? (
+                      <span className="text-red-500 font-bold">● AUSENTE</span>
+                    ) : (
+                      <span className="text-green-400 font-bold">✓ ACTIVO</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* NTP Warning */}
+          {mode === 'antes' && (
+            <div className="mb-4 p-3 rounded-sm border border-yellow-500/50 bg-yellow-500/10">
+              <div className="flex gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-600">
+                  Sin NTP: los timestamp de cada servidor tienen horarios distintos. Imposible correlacionar eventos.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Logs */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <h3 className="text-xs font-bold text-cyan-300 mb-2 tracking-widest">
+              LOGS DISPERSOS (SIN SIEM) - {logs.length} eventos
+            </h3>
+            <SystemLog logs={logs} />
+          </div>
         </div>
       </div>
     </div>
