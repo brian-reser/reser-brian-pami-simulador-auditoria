@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Lock, AlertTriangle, CheckCircle, XCircle, Loader } from 'lucide-react';
 import type { SimulationMode, AttackType, SimulationPhase } from '@/pages/Home';
 
@@ -163,7 +163,7 @@ export default function SimulationPanel({
   }
 
   if (phase === 'result') {
-    const isSuccess = mode === 'protegido';
+    const isSuccess = mode === 'despues';
     const resultTitle =
       attackType === 'credentials'
         ? isSuccess
@@ -178,8 +178,8 @@ export default function SimulationPanel({
             : 'BACKUPS ELIMINADOS';
 
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="w-full max-w-lg text-center">
+      <div className="flex items-center justify-center h-full overflow-y-auto">
+        <div className="w-full max-w-2xl text-center py-6">
           <div
             className={`text-6xl mb-4 ${
               isSuccess ? 'text-green-400' : 'text-red-500'
@@ -196,7 +196,7 @@ export default function SimulationPanel({
             {resultTitle}
           </h2>
 
-          <div className="bg-card border-2 rounded-sm p-4 mb-6 text-left">
+          <div className="bg-card border-2 rounded-sm p-4 mb-6 text-left max-h-96 overflow-y-auto">
             {attackType === 'credentials' && (
               <div className="space-y-2 text-sm font-mono">
                 <p className="text-cyan-400">
@@ -205,57 +205,87 @@ export default function SimulationPanel({
                 <p className="text-muted-foreground">
                   {isSuccess
                     ? 'La defensa de 2FA bloqueó el acceso no autorizado'
-                    : 'Usuario: admin | Contraseña: ••••••'}
+                    : 'Usuario: admin | Contraseña: admin123'}
                 </p>
+                {!isSuccess && (
+                  <>
+                    <p className="text-red-500 font-bold mt-3">[LATERAL] Movimiento lateral exitoso - Sin segmentación de red</p>
+                    <p className="text-red-500">[EXPOSED] Acceso a todas las bases de datos:</p>
+                    <ul className="text-red-500 ml-4 mt-2 space-y-1">
+                      <li>• afiliados (5.2M registros)</li>
+                      <li>• recetas_medicas</li>
+                      <li>• turnos_medicos</li>
+                      <li>• historias_clinicas (SENSIBLE)</li>
+                      <li>• empleados_sueldos</li>
+                    </ul>
+                  </>
+                )}
               </div>
             )}
 
             {attackType === 'sql' && (
               <div className="space-y-2 text-sm font-mono">
-                <p className="text-cyan-400">
+                <p className={isSuccess ? 'text-green-400' : 'text-red-500 font-bold'}>
                   {isSuccess
                     ? '[BLOCKED] WAF interceptó la solicitud maliciosa'
-                    : '[SUCCESS] Datos extraídos de la base de datos'}
+                    : '[SUCCESS] SQL INJECTION EXITOSA - SIN WAF'}
                 </p>
                 {!isSuccess && (
-                  <table className="w-full text-left text-xs mt-2">
-                    <thead>
-                      <tr className="border-b border-cyan-500/30">
-                        <th className="text-cyan-400">ID</th>
-                        <th className="text-cyan-400">Nombre</th>
-                        <th className="text-cyan-400">DNI</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="text-yellow-400">1</td>
-                        <td className="text-yellow-400">Juan Pérez</td>
-                        <td className="text-yellow-400">12345678</td>
-                      </tr>
-                      <tr>
-                        <td className="text-yellow-400">2</td>
-                        <td className="text-yellow-400">María García</td>
-                        <td className="text-yellow-400">87654321</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div className="mt-3">
+                    <p className="text-red-500 font-bold mb-2">TODA LA BASE DE AFILIADOS EXPUESTA EN TEXTO PLANO</p>
+                    <table className="w-full text-left text-xs border border-red-500/30">
+                      <thead>
+                        <tr className="border-b border-red-500/50 bg-red-500/10">
+                          <th className="text-red-400 p-1">DNI</th>
+                          <th className="text-red-400 p-1">Nombre</th>
+                          <th className="text-red-400 p-1">Enfermedad (Historia Clínica)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-red-500/20">
+                          <td className="text-red-500 p-1">12345678</td>
+                          <td className="text-red-500 p-1">Juan Pérez</td>
+                          <td className="text-red-500 p-1">Diabetes Mellitus Tipo 2</td>
+                        </tr>
+                        <tr className="border-b border-red-500/20">
+                          <td className="text-red-500 p-1">87654321</td>
+                          <td className="text-red-500 p-1">María García</td>
+                          <td className="text-red-500 p-1">Hipertensión Arterial</td>
+                        </tr>
+                        <tr>
+                          <td className="text-red-500 p-1">55555555</td>
+                          <td className="text-red-500 p-1">Carlos López</td>
+                          <td className="text-red-500 p-1">Cáncer de Próstata</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p className="text-red-500 font-bold mt-3">VIOLACIÓN LEY 25.326 - DATOS SENSIBLES DE SALUD EXPUESTOS SIN CIFRAR</p>
+                  </div>
                 )}
               </div>
             )}
 
             {attackType === 'backups' && (
               <div className="space-y-2 text-sm font-mono">
-                <p className="text-cyan-400">
-                  {isSuccess
-                    ? '[BLOCKED] Firewall impidió acceso al NAS'
-                    : '[CRITICAL] Backups eliminados del sistema'}
-                </p>
-                {!isSuccess && (
-                  <p className="text-red-500 mt-2">
-                    $ rm -rf /backups/* <br />
-                    $ shred -vfz -n 10 /backups/.* <br />
-                    [COMPLETE] Eliminación de datos completada
-                  </p>
+                {isSuccess ? (
+                  <>
+                    <p className="text-green-400 font-bold">[BLOCKED] Segmentación de red activa - Acceso denegado</p>
+                    <p className="text-green-400">[PROTECTED] Backups protegidos con WORM</p>
+                    <p className="text-green-400">[SAFE] Regla 3-2-1 implementada correctamente</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-red-500 font-bold">[CRITICAL] Accediendo al servidor NAS...</p>
+                    <p className="text-red-500">Connecting to 10.0.50.10:22..</p>
+                    <p className="text-red-500 font-bold mt-2">SIN SEGMENTACIÓN - CONEXIÓN DIRECTA AL NAS</p>
+                    <p className="text-red-500 mt-2">
+                      $ rm -rf /backups/* <br />
+                      $ shred -vfz -n 10 /backups/.* <br />
+                      [COMPLETE] Eliminación de datos completada
+                    </p>
+                    <p className="text-red-500 font-bold mt-2">SIN WORM - SIN REGLA 3-2-1 - BORRADO COMPLETO EXITOSO</p>
+                    <p className="text-red-500 font-bold mt-2">RECUPERACIÓN IMPOSIBLE - SISTEMA COMPLETAMENTE COMPROMETIDO</p>
+                  </>
                 )}
               </div>
             )}

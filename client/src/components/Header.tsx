@@ -24,25 +24,25 @@ export default function Header({ mode, onToggleMode }: HeaderProps) {
           <p className="text-xs text-muted-foreground tracking-widest mb-1">MODO ACTUAL</p>
           <p
             className={`text-lg font-bold tracking-wider ${
-              mode === 'simulacro' ? 'text-yellow-400' : 'text-green-400'
+              mode === 'antes' ? 'text-red-400' : 'text-green-400'
             }`}
           >
-            {mode === 'simulacro' ? 'SIMULACRO' : 'PROTEGIDO'}
+            {mode === 'antes' ? 'ANTES' : 'DESPUÉS'}
           </p>
         </div>
 
         <button
           onClick={onToggleMode}
           className={`relative w-16 h-8 rounded-sm border-2 transition-all duration-300 ${
-            mode === 'simulacro'
-              ? 'border-yellow-400 bg-yellow-400/10'
+            mode === 'antes'
+              ? 'border-red-400 bg-red-400/10'
               : 'border-green-400 bg-green-400/10'
           } hover:shadow-lg`}
         >
           <div
             className={`absolute top-1 w-6 h-6 rounded-sm bg-gradient-to-br transition-all duration-300 ${
-              mode === 'simulacro'
-                ? 'left-1 from-yellow-400 to-yellow-600'
+              mode === 'antes'
+                ? 'left-1 from-red-400 to-red-600'
                 : 'right-1 from-green-400 to-green-600'
             }`}
           />

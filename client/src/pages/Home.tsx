@@ -4,8 +4,9 @@ import SimulationPanel from '@/components/SimulationPanel';
 import SystemLog from '@/components/SystemLog';
 import AttackSamples from '@/components/AttackSamples';
 import Header from '@/components/Header';
+import ControlsPanel from '@/components/ControlsPanel';
 
-export type SimulationMode = 'simulacro' | 'protegido';
+export type SimulationMode = 'antes' | 'despues';
 export type AttackType = 'credentials' | 'sql' | 'backups';
 export type SimulationPhase = 'idle' | 'login' | 'loading' | 'result' | '2fa';
 
@@ -16,21 +17,22 @@ interface LogEntry {
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<SimulationMode>('simulacro');
+  const [mode, setMode] = useState<SimulationMode>('antes');
   const [currentAttack, setCurrentAttack] = useState<AttackType | null>(null);
   const [phase, setPhase] = useState<SimulationPhase>('idle');
   const [logs, setLogs] = useState<LogEntry[]>([
     {
-      timestamp: '23:45:12',
+      timestamp: '14:23:45',
       level: 'info',
       message: '[INIT] Sistema de auditoría iniciado',
     },
     {
-      timestamp: '23:45:13',
-      level: 'success',
-      message: '[ONLINE] Todos los servicios operacionales',
+      timestamp: '14:23:47',
+      level: 'warning',
+      message: '[WARNING] NTP no sincronizado - Reloj del sistema desincronizado',
     },
   ]);
+  
   type ServiceStatus = 'online' | 'exposed' | 'critical';
   
   const [simulationData, setSimulationData] = useState<{
@@ -51,9 +53,43 @@ export default function Home() {
     ],
   });
 
+  const [controls, setControls] = useState({
+    mfa: mode === 'despues',
+    waf: mode === 'despues',
+    tde: mode === 'despues',
+    worm: mode === 'despues',
+    vlan: mode === 'despues',
+    ntp: mode === 'despues',
+    soc: mode === 'despues',
+  });
+
+  useEffect(() => {
+    setControls({
+      mfa: mode === 'despues',
+      waf: mode === 'despues',
+      tde: mode === 'despues',
+      worm: mode === 'despues',
+      vlan: mode === 'despues',
+      ntp: mode === 'despues',
+      soc: mode === 'despues',
+    });
+  }, [mode]);
+
   const addLog = (message: string, level: 'info' | 'warning' | 'error' | 'success' = 'info') => {
-    const now = new Date();
-    const timestamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    let timestamp: string;
+    
+    if (controls.ntp) {
+      // DESPUÉS: NTP sincronizado - ISO 8601
+      const now = new Date();
+      timestamp = now.toISOString().split('T')[1].split('.')[0];
+    } else {
+      // ANTES: Sin NTP - timestamps desincronizados
+      const hours = Math.floor(Math.random() * 24);
+      const minutes = Math.floor(Math.random() * 60);
+      const seconds = Math.floor(Math.random() * 60);
+      timestamp = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
     setLogs((prev) => [...prev, { timestamp, level, message }].slice(-50));
   };
 
@@ -62,16 +98,17 @@ export default function Home() {
     setPhase('login');
     addLog(`[ATTACK] Iniciando simulación: ${attackType}`, 'warning');
 
-    // Simulate attack progression
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     if (attackType === 'credentials') {
       setPhase('loading');
-      addLog('[CREDENTIALS] Intentando acceso con datos robados...', 'warning');
+      addLog('[CREDENTIALS] Intentando acceso con credenciales básicas (admin/admin123)...', 'warning');
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      if (mode === 'simulacro') {
+      if (mode === 'antes') {
         addLog('[SUCCESS] Acceso concedido - Credenciales válidas', 'error');
+        addLog('[LATERAL] Movimiento lateral exitoso - Sin segmentación de red', 'error');
+        addLog('[EXPOSED] Acceso a: afiliados, recetas_medicas, turnos_medicos, historias_clinicas, empleados_sueldos', 'error');
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
@@ -82,16 +119,25 @@ export default function Home() {
           ),
         }));
       } else {
-        addLog('[2FA] Segundo factor requerido', 'info');
+        addLog('[2FA] Segundo factor requerido - MFA activado', 'info');
         setPhase('2fa');
       }
     } else if (attackType === 'sql') {
       setPhase('loading');
-      addLog('[SQL] Inyectando payload SQL...', 'warning');
+      if (controls.waf) {
+        addLog('[SQL] Inyectando payload SQL...', 'warning');
+        addLog('[WAF] Web Application Firewall activo - Analizando payload', 'info');
+      } else {
+        addLog('[SQL] Inyectando payload SQL - SIN WAF - Payload enviado directo al backend', 'error');
+      }
       await new Promise((resolve) => setTimeout(resolve, 2500));
 
-      if (mode === 'simulacro') {
-        addLog('[SUCCESS] SQL Injection exitosa - Datos extraídos', 'error');
+      if (mode === 'antes') {
+        addLog('[SUCCESS] SQL INJECTION EXITOSA - SIN WAF', 'error');
+        addLog('[CRITICAL] TODA LA BASE DE AFILIADOS EXPUESTA EN TEXTO PLANO', 'error');
+        addLog('[EXPOSED] DNI: 12345678 | Nombre: Juan Pérez | Enfermedad: Diabetes Mellitus Tipo 2', 'error');
+        addLog('[EXPOSED] DNI: 87654321 | Nombre: María García | Enfermedad: Hipertensión Arterial', 'error');
+        addLog('[VIOLATION] VIOLACIÓN LEY 25.326 - DATOS SENSIBLES DE SALUD EXPUESTOS SIN CIFRAR', 'error');
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
@@ -102,16 +148,25 @@ export default function Home() {
           ),
         }));
       } else {
-        addLog('[WAF] Web Application Firewall bloqueó la inyección', 'success');
+        addLog('[WAF] INYECCIÓN SQL BLOQUEADA - WAF interceptó la solicitud maliciosa', 'success');
         setPhase('result');
       }
     } else if (attackType === 'backups') {
       setPhase('loading');
       addLog('[RANSOMWARE] Accediendo al servidor NAS...', 'warning');
+      if (controls.vlan) {
+        addLog('[VLAN] Segmentación de red activa - Acceso denegado', 'success');
+      } else {
+        addLog('[NETWORK] Sin segmentación - Conexión directa al NAS - Connecting to 10.0.50.10:22..', 'error');
+      }
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      if (mode === 'simulacro') {
+      if (mode === 'antes') {
         addLog('[CRITICAL] Ejecutando comando de borrado: rm -rf /backups/*', 'error');
+        if (!controls.worm) {
+          addLog('[CRITICAL] SIN WORM - SIN REGLA 3-2-1 - BORRADO COMPLETO EXITOSO', 'error');
+          addLog('[DISASTER] Backups eliminados - Recuperación imposible', 'error');
+        }
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
@@ -123,6 +178,7 @@ export default function Home() {
         }));
       } else {
         addLog('[FIREWALL] Políticas de firewall impidieron acceso no autorizado', 'success');
+        addLog('[WORM] Backups protegidos con WORM - Regla 3-2-1 implementada', 'success');
         setPhase('result');
       }
     }
@@ -139,10 +195,10 @@ export default function Home() {
   };
 
   const toggleMode = () => {
-    const newMode = mode === 'simulacro' ? 'protegido' : 'simulacro';
+    const newMode = mode === 'antes' ? 'despues' : 'antes';
     setMode(newMode);
     resetSimulation();
-    addLog(`[MODE] Cambiado a modo ${newMode}`, 'info');
+    addLog(`[MODE] Cambiado a modo ${newMode.toUpperCase()}`, 'info');
   };
 
   return (
@@ -151,15 +207,22 @@ export default function Home() {
 
       <div className="flex h-[calc(100vh-80px)] gap-2 p-2">
         {/* Left Panel - Attack Samples */}
-        <div className="w-1/4 overflow-y-auto border border-cyan-500/30 rounded-sm p-4 glow-cyan">
+        <div className="w-1/4 overflow-y-auto border border-cyan-500/30 rounded-sm p-4 glow-cyan flex flex-col">
           <h2 className="text-lg font-bold mb-4 text-cyan-400 tracking-wider">
             MUESTRAS DE ATAQUE
           </h2>
-          <AttackSamples
-            onExecute={executeAttack}
-            disabled={phase !== 'idle'}
-            mode={mode}
-          />
+          <div className="flex-1">
+            <AttackSamples
+              onExecute={executeAttack}
+              disabled={phase !== 'idle'}
+              mode={mode}
+            />
+          </div>
+          
+          {/* Controls Panel */}
+          <div className="mt-4 pt-4 border-t border-cyan-500/30">
+            <ControlsPanel controls={controls} mode={mode} />
+          </div>
         </div>
 
         {/* Center Panel - Simulation Area */}
@@ -170,7 +233,7 @@ export default function Home() {
             mode={mode}
             onReset={resetSimulation}
             onValidate2FA={() => {
-              if (mode === 'protegido') {
+              if (mode === 'despues') {
                 addLog('[2FA] Token validado correctamente', 'success');
               } else {
                 addLog('[2FA] Acceso denegado - Token inválido', 'error');

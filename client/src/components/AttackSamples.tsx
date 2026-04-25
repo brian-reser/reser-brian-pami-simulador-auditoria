@@ -66,10 +66,10 @@ export default function AttackSamples({ onExecute, disabled, mode }: AttackSampl
 
       <div className="mt-4 p-3 border border-yellow-500/30 rounded-sm bg-yellow-500/5">
         <p className="text-xs text-yellow-400 font-bold mb-1 tracking-wider">
-          MODO: {mode.toUpperCase()}
+          MODO: {mode === 'antes' ? 'PRE-REMEDIACIÓN' : 'POST-REMEDIACIÓN'}
         </p>
         <p className="text-xs text-muted-foreground">
-          {mode === 'simulacro'
+          {mode === 'antes'
             ? 'Los ataques serán exitosos. Observa las vulnerabilidades.'
             : 'Las defensas bloquearán los ataques. Observa la protección.'}
         </p>
