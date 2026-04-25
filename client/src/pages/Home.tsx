@@ -84,16 +84,24 @@ export default function Home() {
   const addLog = (message: string, level: 'info' | 'warning' | 'error' | 'success' = 'info') => {
     let timestamp: string;
     
-    if (controls.ntp) {
-      // DESPUÉS: NTP sincronizado - ISO 8601
-      const now = new Date();
-      timestamp = now.toISOString().split('T')[1].split('.')[0];
+    if (mode === 'despues') {
+      // DESPUÉS: Timestamps sincronizados (11:58-11:59 a.m. UTC-3)
+      const baseTime = new Date('2026-04-25T11:58:42-03:00');
+      const currentTime = new Date(baseTime.getTime() + Math.random() * 20000); // +0-20 segundos
+      const hours = currentTime.getHours();
+      const minutes = currentTime.getMinutes();
+      const seconds = currentTime.getSeconds();
+      const period = hours >= 12 ? 'p. m.' : 'a. m.';
+      const displayHours = hours > 12 ? hours - 12 : hours;
+      timestamp = `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${period}`;
     } else {
       // ANTES: Sin NTP - timestamps desincronizados
       const hours = Math.floor(Math.random() * 24);
       const minutes = Math.floor(Math.random() * 60);
       const seconds = Math.floor(Math.random() * 60);
-      timestamp = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      const period = hours >= 12 ? 'p. m.' : 'a. m.';
+      const displayHours = hours > 12 ? hours - 12 : hours;
+      timestamp = `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${period}`;
     }
     
     setLogs((prev) => [...prev, { timestamp, level, message }].slice(-50));
@@ -138,8 +146,14 @@ export default function Home() {
           ),
         }));
       } else {
-        addLog('[2FA] Segundo factor requerido - MFA activado', 'info');
-        setPhase('2fa');
+        addLog('[IDS] Intento de login detectado desde IP externa 185.220.101.xx (Tor Exit Node)', 'warning');
+        addLog('[AUTH] Credenciales \'admin/admin123\' RECHAZADAS - Cuenta genérica deshabilitada', 'success');
+        addLog('[AUTH] Sistema requiere usuario nominal: brian.reser@pami.org', 'info');
+        addLog('[MFA] Solicitando segundo factor de autenticación (TOTP)...', 'warning');
+        addLog('[MFA] SEGUNDO FACTOR NO PROPORCIONADO - Sesión rechazada', 'success');
+        addLog('[SIEM] Alerta generada: Intento de acceso sin MFA. IP bloqueada automáticamente.', 'success');
+        setPhase('result');
+        setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
       }
     } else if (attackType === 'sql') {
       setPhase('loading');
@@ -163,7 +177,11 @@ export default function Home() {
           ),
         }));
       } else {
-        addLog('[WAF] INYECCIÓN SQL BLOQUEADA - WAF interceptó la solicitud maliciosa', 'success');
+        addLog('[WAF] Payload sospechoso detectado en campo de búsqueda: \' OR 1=1 --', 'warning');
+        addLog('[WAF] Patrón de SQL Injection identificado - Regla OWASP CRS 942100', 'warning');
+        addLog('[WAF] REQUEST BLOQUEADA - Web Application Firewall activo', 'success');
+        addLog('[DB] Verificación: datos cifrados con TDE. Incluso con acceso, los datos serían ilegibles.', 'info');
+        addLog('[SIEM] Incidente registrado. SoD verificada: usuario sin permisos de lectura directa a BD.', 'success');
         setPhase('result');
         setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
       }
@@ -189,8 +207,11 @@ export default function Home() {
           ),
         }));
       } else {
-        addLog('[FIREWALL] Políticas de firewall impidieron acceso no autorizado', 'success');
-        addLog('[WORM] Backups protegidos con WORM - Regla 3-2-1 implementada', 'success');
+        addLog('[IDS] Intento de conexión al servidor NAS desde segmento no autorizado', 'warning');
+        addLog('[FIREWALL] Conexión RECHAZADA por regla de segmentación de red (VLAN aislada)', 'success');
+        addLog('[STORAGE] Backups protegidos con WORM (Write Once Read Many) - Borrado imposible', 'info');
+        addLog('[DRP] Regla 3-2-1 activa: 3 copias, 2 medios, 1 offsite. Integridad verificada.', 'success');
+        addLog('[SIEM] Alerta crítica generada. Intento de ataque bloqueado y registrado con timestamp consistente.', 'success');
         setPhase('result');
         setSimulationData((prev) => ({ ...prev, inProgress: 0 }));
       }
@@ -205,7 +226,6 @@ export default function Home() {
       inProgress: 0,
       services: prev.services.map((s) => ({ ...s, status: 'online' })),
     }));
-    addLog('[RESET] Simulación finalizada - Sistema reiniciado', 'info');
   };
 
   const toggleMode = () => {
@@ -219,7 +239,45 @@ export default function Home() {
       alarms: 0,
       services: prev.services.map((s) => ({ ...s, status: 'online' })),
     }));
-    addLog(`[MODE] Cambiado a modo ${newMode.toUpperCase()}`, 'info');
+    
+    // Limpiar logs y establecer logs iniciales según el modo
+    if (newMode === 'despues') {
+      setLogs([
+        {
+          timestamp: '11:58:42 a. m.',
+          level: 'success',
+          message: '[SYSTEM] SIEM inicializado. Monitoreo activo 24/7.',
+        },
+        {
+          timestamp: '11:58:42 a. m.',
+          level: 'success',
+          message: '[NTP] Sincronización NTP verificada - Todos los servidores en hora (UTC-3).',
+        },
+        {
+          timestamp: '11:58:42 a. m.',
+          level: 'success',
+          message: '[SOC] SOC 24/7 operativo. Analistas en línea. Auditoría continua activa.',
+        },
+      ]);
+    } else {
+      setLogs([
+        {
+          timestamp: '11:02:30 a. m.',
+          level: 'info',
+          message: '[SYSTEM] Sistema iniciado. Sin SIEM configurado.',
+        },
+        {
+          timestamp: '08:40:30 a. m.',
+          level: 'warning',
+          message: '[NTP] ADVERTENCIA: Servidores sin sincronización NTP. Timestamps inconsistentes.',
+        },
+        {
+          timestamp: '01:05:30 p. m.',
+          level: 'warning',
+          message: '[SOC] SOC no configurado. Sin monitoreo 24/7.',
+        },
+      ]);
+    }
   };
 
   const controlsList = [
