@@ -21,14 +21,19 @@ export default function Home() {
   const [phase, setPhase] = useState<SimulationPhase>('idle');
   const [logs, setLogs] = useState<LogEntry[]>([
     {
-      timestamp: '14:23:45',
+      timestamp: '11:02:30 a. m.',
       level: 'info',
-      message: '[INIT] Sistema de auditoría iniciado',
+      message: '[SYSTEM] Sistema iniciado. Sin SIEM configurado.',
     },
     {
-      timestamp: '14:23:47',
+      timestamp: '08:40:30 a. m.',
       level: 'warning',
-      message: '[WARNING] NTP no sincronizado - Reloj del sistema desincronizado',
+      message: '[NTP] ADVERTENCIA: Servidores sin sincronización NTP. Timestamps inconsistentes.',
+    },
+    {
+      timestamp: '01:05:30 p. m.',
+      level: 'warning',
+      message: '[SOC] SOC no configurado. Sin monitoreo 24/7.',
     },
   ]);
   
@@ -112,13 +117,16 @@ export default function Home() {
 
     if (attackType === 'credentials') {
       setPhase('loading');
-      addLog('[CREDENTIALS] Intentando acceso con credenciales básicas (admin/admin123)...', 'warning');
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       if (mode === 'antes') {
-        addLog('[SUCCESS] Acceso concedido - Credenciales válidas', 'error');
-        addLog('[LATERAL] Movimiento lateral exitoso - Sin segmentación de red', 'error');
-        addLog('[EXPOSED] Acceso a: afiliados, recetas_medicas, turnos_medicos, historias_clinicas, empleados_sueldos', 'error');
+        addLog('[SRV-WEB] Intento de login recibido desde IP 185.220.101.xx', 'warning');
+        addLog('[AUTH] Verificando credenciales: admin / admin123...', 'warning');
+        addLog('[AUTH] Credenciales genéricas ACEPTADAS - Sin segundo factor requerido', 'error');
+        addLog('[SRV-WEB] Sesión activa. Usuario \'admin\' con acceso total al portal.', 'error');
+        addLog('[SRV-DB] Navegación libre por base de datos de afiliados, recetas, turnos...', 'error');
+        addLog('[SRV-APP] Movimiento lateral detectado: acceso a /api/sueldos desde sesión de portal', 'error');
+        addLog('[SRV-DB] Acceso a tabla \'empleados_sueldos\' - Sin segmentación de red', 'error');
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
@@ -135,20 +143,15 @@ export default function Home() {
       }
     } else if (attackType === 'sql') {
       setPhase('loading');
-      if (controls.waf) {
-        addLog('[SQL] Inyectando payload SQL...', 'warning');
-        addLog('[WAF] Web Application Firewall activo - Analizando payload', 'info');
-      } else {
-        addLog('[SQL] Inyectando payload SQL - SIN WAF - Payload enviado directo al backend', 'error');
-      }
       await new Promise((resolve) => setTimeout(resolve, 2500));
 
       if (mode === 'antes') {
-        addLog('[SUCCESS] SQL INJECTION EXITOSA - SIN WAF', 'error');
-        addLog('[CRITICAL] TODA LA BASE DE AFILIADOS EXPUESTA EN TEXTO PLANO', 'error');
-        addLog('[EXPOSED] DNI: 12345678 | Nombre: Juan Pérez | Enfermedad: Diabetes Mellitus Tipo 2', 'error');
-        addLog('[EXPOSED] DNI: 87654321 | Nombre: María García | Enfermedad: Hipertensión Arterial', 'error');
-        addLog('[VIOLATION] VIOLACIÓN LEY 25.326 - DATOS SENSIBLES DE SALUD EXPUESTOS SIN CIFRAR', 'error');
+        addLog('[SRV-WEB] Consulta recibida en campo de búsqueda de afiliados', 'warning');
+        addLog('[SRV-WEB] Sin WAF configurado - Payload pasa directo al backend', 'error');
+        addLog('[SRV-DB] SQL ejecutado: SELECT * FROM afiliados WHERE dni=\'\'  OR 1=1 --\'', 'error');
+        addLog('[SRV-DB] RESULTADO: 1.247.835 registros devueltos - TODA la base de afiliados expuesta', 'error');
+        addLog('[SRV-DB] Datos en texto plano: DNI, nombre, dirección, historia clínica, medicación...', 'error');
+        addLog('[LEGAL] Violación Ley 25.326 (Protección de Datos Personales) - Datos sensibles de salud expuestos', 'error');
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
@@ -166,20 +169,15 @@ export default function Home() {
       }
     } else if (attackType === 'backups') {
       setPhase('loading');
-      addLog('[RANSOMWARE] Accediendo al servidor NAS...', 'warning');
-      if (controls.vlan) {
-        addLog('[VLAN] Segmentación de red activa - Acceso denegado', 'success');
-      } else {
-        addLog('[NETWORK] Sin segmentación - Conexión directa al NAS - Connecting to 10.0.50.10:22..', 'error');
-      }
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       if (mode === 'antes') {
-        addLog('[CRITICAL] Ejecutando comando de borrado: rm -rf /backups/*', 'error');
-        if (!controls.worm) {
-          addLog('[CRITICAL] SIN WORM - SIN REGLA 3-2-1 - BORRADO COMPLETO EXITOSO', 'error');
-          addLog('[DISASTER] Backups eliminados - Recuperación imposible', 'error');
-        }
+        addLog('[SRV-APP] Intento de conexión SSH a nas-backup-01.pami.internal', 'warning');
+        addLog('[SRV-NAS] Conexión SSH aceptada - Sin regla de firewall entre segmentos', 'error');
+        addLog('[SRV-NAS] Ejecutando: rm -rf /backups/afiliados/* /backups/recetas/*', 'error');
+        addLog('[SRV-NAS] BACKUPS ELIMINADOS - Sin protección WORM. Sin regla 3-2-1.', 'error');
+        addLog('[RANSOM] Rhysida despliega ransomware. Cifrado de 1.6TB de datos. Sin posibilidad de recuperación.', 'error');
+        addLog('[SISTEMA] PAMI fuera de servicio. 5M afiliados sin acceso.', 'error');
         setPhase('result');
         setSimulationData((prev) => ({
           ...prev,
