@@ -298,7 +298,7 @@ export default function Home() {
         {/* Left Panel - Attack Samples */}
         <div className="w-1/4 overflow-y-auto border border-cyan-500/30 rounded-sm p-4 glow-cyan flex flex-col">
           <h2 className="text-lg font-bold mb-4 text-cyan-400 tracking-wider">
-            MUESTRAS DE ATAQUE
+            RED TEAM - MUESTREOS
           </h2>
           <div className="flex-1">
             <AttackSamples
@@ -332,7 +332,7 @@ export default function Home() {
         <div className="w-1/4 border border-red-500/30 rounded-sm p-4 glow-red flex flex-col overflow-y-auto">
           {/* Header */}
           <h2 className="text-lg font-bold mb-4 text-red-400 tracking-wider">
-            LOGS DEL SISTEMA (SIN SIEM)
+            {mode === 'antes' ? 'LOGS DEL SISTEMA (SIN SIEM)' : 'BLUE TEAM - SIEM DASHBOARD'}
           </h2>
 
           {/* Counters Grid */}

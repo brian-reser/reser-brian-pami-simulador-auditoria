@@ -26,18 +26,31 @@ export default function SimulationPanel({
   if (phase === 'idle') {
     const isAntes = mode === 'antes';
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-bold text-cyan-400 mb-4 tracking-wider">
-            PORTAL DE AFILIADOS PAMI
-          </h2>
-          <div className={`text-lg font-bold mb-6 tracking-wider ${isAntes ? 'text-red-500' : 'text-green-400'}`}>
-            {isAntes ? 'Estado: Agosto 2023 - Sin controles de seguridad implementados' : 'Estado: Post-auditoría - Todos los controles implementados y verificados'}
+      <div className="flex flex-col items-center justify-between h-full">
+        <div className="flex justify-center mb-4">
+          <img src="/manus-storage/uai-logo_02040df6.png" alt="UAI Logo" className="h-16 opacity-80" />
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4 tracking-wider">
+              PORTAL DE AFILIADOS PAMI
+            </h2>
+            <div className={`text-lg font-bold mb-6 tracking-wider ${isAntes ? 'text-red-500' : 'text-green-400'}`}>
+              {isAntes ? 'Estado: Agosto 2023 - Sin controles de seguridad implementados' : 'Estado: Post-auditoría - Todos los controles implementados y verificados'}
+            </div>
+            <p className="text-muted-foreground text-sm mb-8">
+              Seleccione un muestreo en el panel izquierdo para comenzar la simulación.
+            </p>
+            <div className="text-6xl text-cyan-400 opacity-50">⟳</div>
           </div>
-          <p className="text-muted-foreground text-sm mb-8">
-            Seleccione un muestreo en el panel izquierdo para comenzar la simulación.
-          </p>
-          <div className="text-6xl text-cyan-400 opacity-50">⟳</div>
+        </div>
+        
+        <div className="text-center text-xs text-muted-foreground border-t border-cyan-500/20 pt-4 w-full">
+          <div className="font-bold text-cyan-400 mb-2">Auditoría de Sistemas — PAMI</div>
+          <div className="mb-1">Profesor: Ing. Federico Nicolás Brest</div>
+          <div className="text-green-400 font-semibold mb-2">Equipo Auditor - Grupo 5</div>
+          <div>Brian Reser • Nahuel Nader • Ornella Mansilla • María Belén Fiuza</div>
         </div>
       </div>
     );
