@@ -1,6 +1,6 @@
 # Simulador de ciberseguridad PAMI
 
-**English summary.** Interactive cybersecurity simulator built for the *Auditoría de Sistemas* (Systems Audit) course at Universidad Abierta Interamericana (UAI), Lomas de Zamora campus, summer 2026 (graded 10/10). It presents an audit of a fictional-scale replica of the PAMI affiliates portal to a non-technical audience, in two modes: a **before** mode where three attacks succeed (credential theft, SQL injection, backup deletion after ransomware) and an **after** mode where the audit's recommended controls (MFA, WAF, TDE encryption, WORM backups, VLAN segmentation, NTP, 24/7 SOC) stop them. Built with Manus AI agents, directed, reviewed and tested by the team. Educational only: it attacks no real system and has no official relationship with PAMI.
+**English summary.** Interactive cybersecurity simulator built for the *Auditoría de Sistemas* (Systems Audit) course at Universidad Abierta Interamericana (UAI), Lomas de Zamora campus, summer 2026 (graded 10/10). It presents an audit of the PAMI affiliates portal, using a simulated replica to a non-technical audience, in two modes: a **before** mode where three attacks succeed (credential theft, SQL injection, backup deletion after ransomware) and an **after** mode where the audit's recommended controls (MFA, WAF, TDE encryption, WORM backups, VLAN segmentation, NTP, 24/7 SOC) stop them. Built with Manus AI agents, directed, reviewed and tested by the team. Educational only: it attacks no real system and has no official relationship with PAMI.
 
 **Demo en vivo:** https://brian-reser-grupo5-auditoria-uai.manus.space/
 
@@ -46,7 +46,7 @@ Estructura: `client/` (la aplicación), `server/` (servidor estático), `shared/
 
 ## Cómo correrlo en local
 
-Requisitos: Node.js 20 o superior y [pnpm](https://pnpm.io/). Probado con Node 22 y pnpm 10.
+Requisitos: Node.js 20.19 o superior (requisito de Vite 7) y [pnpm](https://pnpm.io/). Probado con Node 22 y pnpm 10.
 
 ```bash
 git clone https://github.com/brian-reser/reser-brian-pami-simulador-auditoria.git
