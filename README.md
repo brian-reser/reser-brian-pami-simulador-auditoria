@@ -2,7 +2,13 @@
 
 **English summary.** Interactive cybersecurity simulator built for the *Auditoría de Sistemas* (Systems Audit) course at Universidad Abierta Interamericana (UAI), Lomas de Zamora campus, summer 2026 (graded 10/10). It presents an audit of the PAMI affiliates portal, using a simulated replica to a non-technical audience, in two modes: a **before** mode where three attacks succeed (credential theft, SQL injection, backup deletion after ransomware) and an **after** mode where the audit's recommended controls (MFA, WAF, TDE encryption, WORM backups, VLAN segmentation, NTP, 24/7 SOC) stop them. Built with Manus AI agents, directed, reviewed and tested by the team. Educational only: it attacks no real system and has no official relationship with PAMI.
 
-**Demo en vivo:** https://brian-reser-grupo5-auditoria-uai.manus.space/
+**Live demo, no installation needed:** https://brian-reser-grupo5-auditoria-uai.manus.space/
+
+## Probalo en vivo
+
+**No hace falta instalar nada:** abrí la demo en el navegador y ejecutá los ataques en los dos modos.
+
+👉 **https://brian-reser-grupo5-auditoria-uai.manus.space/**
 
 ![Modo ANTES: portal sin controles de seguridad](docs/demo-inicio.png)
 
@@ -46,6 +52,8 @@ Estructura: `client/` (la aplicación), `server/` (servidor estático), `shared/
 
 ## Cómo correrlo en local
 
+Solo hace falta si querés ver o modificar el código. Para usar el simulador alcanza con la [demo en vivo](https://brian-reser-grupo5-auditoria-uai.manus.space/).
+
 Requisitos: Node.js 20.19 o superior (requisito de Vite 7) y [pnpm](https://pnpm.io/). Probado con Node 22 y pnpm 10.
 
 ```bash
@@ -55,7 +63,7 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` levanta Vite y muestra la dirección en la consola (por defecto `http://localhost:5173`).
+`pnpm dev` levanta Vite y muestra la dirección en la consola (por defecto `http://localhost:3000`).
 
 Para generar la versión de producción y servirla con Express:
 
@@ -64,7 +72,7 @@ pnpm build
 pnpm start
 ```
 
-Queda en `http://localhost:3000` (o el puerto de la variable `PORT`). Además: `pnpm check` verifica los tipos con TypeScript.
+`pnpm start` usa la sintaxis de Mac y Linux para la variable `NODE_ENV`; en Windows conviene correrlo desde WSL o Git Bash. Queda en `http://localhost:3000` (o el puerto de la variable `PORT`). Además: `pnpm check` verifica los tipos con TypeScript.
 
 ## Contexto académico
 
